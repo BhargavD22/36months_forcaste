@@ -27,8 +27,8 @@ def get_snowflake_data():
     return df
 
 # === Streamlit App UI === #
-st.title("📈 Financial Forecasting App (Snowflake + Prophet)")
-st.markdown("This app retrieves financial data from Snowflake and forecasts future revenue using Prophet.")
+st.title("📈 Financial Forecasting Application")
+st.markdown("This app retrieves financial data from Snowflake ✔ and forecasts future revenue using Prophet.")
 
 # User selects forecast months
 forecast_months = st.slider("Select number of months to forecast:", min_value=1, max_value=60, value=36)
