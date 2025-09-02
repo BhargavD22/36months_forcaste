@@ -45,7 +45,7 @@ def get_bigquery_data():
         return df
     except Exception as e:
         st.error(f"Error fetching data from BigQuery: {e}")
-        return pd.DataFrame() # Return an empty DataFrame on error
+        return pd.DataFrame() # Return an an empty DataFrame on error
 
 # === Streamlit App UI === #
 
@@ -123,6 +123,17 @@ st.markdown(
             color: #ffffff;
         }}
 
+        /* New card-like container style for KPIs */
+        .kpi-card {{
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }}
+        .kpi-card:hover {{
+            transform: translateY(-5px);
+        }}
     </style>
     """,
     unsafe_allow_html=True
@@ -167,35 +178,11 @@ else:
     tab1, tab2 = st.tabs(["📊 Forecast", "📈 Model Performance"])
 
     with tab1:
-        # --- Historical Data Plot ---
-        st.subheader("Historical Revenue Data")
         # Ensure df['ds'] is a datetime object before plotting.
         df['ds'] = pd.to_datetime(df['ds'])
 
         # Calculate 30-day moving average
         df['30_day_avg'] = df['y'].rolling(window=30).mean()
-
-        fig_historical = go.Figure()
-        fig_historical.add_trace(go.Scatter(
-            x=df['ds'], y=df['y'],
-            mode='lines',
-            name='Daily Revenue',
-            line=dict(color='blue', width=2)
-        ))
-        fig_historical.add_trace(go.Scatter(
-            x=df['ds'], y=df['30_day_avg'],
-            mode='lines',
-            name='30-Day Moving Average',
-            line=dict(color='green', width=3)
-        ))
-        fig_historical.update_layout(
-            title="Daily Revenue with 30-Day Moving Average",
-            xaxis_title="Date",
-            yaxis_title="Revenue",
-            template="plotly_white",
-            hovermode="x unified"
-        )
-        st.plotly_chart(fig_historical, use_container_width=True)
 
         # Fit Prophet model with user-defined seasonality
         model = Prophet(weekly_seasonality=weekly_seasonality, yearly_seasonality=yearly_seasonality)
@@ -247,31 +234,49 @@ else:
         else:
             cagr = 0
 
-        # --- Display KPIs in a multi-column layout ---
-        st.subheader("Core Revenue KPIs")
-        col1, col2 = st.columns(2)
+        # --- Display KPIs in a card-based multi-column layout ---
+        st.subheader("Key Financial Metrics")
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric(label="**Total Historical Revenue**", value=f"${total_historical_revenue:,.2f}")
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Total Historical Revenue**", value=f"${total_historical_revenue:,.2f}")
+                st.markdown('</div>', unsafe_allow_html=True)
         with col2:
-            st.metric(label=f"**Total Forecasted Revenue ({forecast_months} mo)**", value=f"${total_forecasted_revenue:,.2f}")
-
-        col3, col4, col5 = st.columns(3)
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label=f"**Total Forecasted Revenue ({forecast_months} mo)**", value=f"${total_forecasted_revenue:,.2f}")
+                st.markdown('</div>', unsafe_allow_html=True)
         with col3:
-            st.metric(label="**Average Revenue (Historical)**", value=f"${avg_historical_revenue:,.2f}")
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Average Daily Revenue**", value=f"${avg_historical_revenue:,.2f}")
+                st.markdown('</div>', unsafe_allow_html=True)
         with col4:
-            st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
-        with col5:
-            st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Historical CAGR**", value=f"{cagr:,.2f}%")
+                st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("---")
-        st.subheader("Growth & Trend KPIs")
-        col6, col7, col8 = st.columns(3)
+        col5, col6, col7 = st.columns(3)
+        with col5:
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+                st.markdown('</div>', unsafe_allow_html=True)
         with col6:
-            st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
+                st.markdown('</div>', unsafe_allow_html=True)
         with col7:
-            st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
-        with col8:
-            st.metric(label="**Historical CAGR**", value=f"{cagr:,.2f}%")
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
+                st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+        st.markdown("---")
 
         # --- Cumulative Revenue Chart ---
         st.subheader("📈 Cumulative Revenue Trend")
@@ -291,6 +296,31 @@ else:
             hovermode="x unified"
         )
         st.plotly_chart(fig_cumulative, use_container_width=True)
+
+        # --- Historical Data Plot ---
+        st.subheader("Historical Revenue Data")
+        
+        fig_historical = go.Figure()
+        fig_historical.add_trace(go.Scatter(
+            x=df['ds'], y=df['y'],
+            mode='lines',
+            name='Daily Revenue',
+            line=dict(color='blue', width=2)
+        ))
+        fig_historical.add_trace(go.Scatter(
+            x=df['ds'], y=df['30_day_avg'],
+            mode='lines',
+            name='30-Day Moving Average',
+            line=dict(color='green', width=3)
+        ))
+        fig_historical.update_layout(
+            title="Daily Revenue with 30-Day Moving Average",
+            xaxis_title="Date",
+            yaxis_title="Revenue",
+            template="plotly_white",
+            hovermode="x unified"
+        )
+        st.plotly_chart(fig_historical, use_container_width=True)
             
         # --- Forecast Chart ---
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
