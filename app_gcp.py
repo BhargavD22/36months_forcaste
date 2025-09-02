@@ -190,28 +190,47 @@ else:
         # --- Create new value cards for KPIs ---
         current_revenue = df['y'].iloc[-1]
         
-        # Calculate projected revenue as the sum of all future yhat values
-        projected_revenue = forecast.tail(forecast_period_days)['yhat_what_if'].sum()
-
-        # Calculate monthly growth rate from the last two data points
-        # Use .iloc[-1] for the last value, .iloc[-2] for the second to last
-        if len(df) >= 2:
-            last_revenue = df['y'].iloc[-1]
-            prev_revenue = df['y'].iloc[-2]
-            monthly_growth_rate = ((last_revenue - prev_revenue) / prev_revenue) * 100
-            monthly_growth_delta = f"{monthly_growth_rate:.2f}%"
+        # Calculate projected revenue as the last day's forecasted value
+        future_forecast = forecast[forecast['ds'] > df['ds'].max()]
+        if not future_forecast.empty:
+            projected_revenue_last_value = future_forecast['yhat_what_if'].iloc[-1]
+            total_forecasted_revenue = future_forecast['yhat_what_if'].sum()
         else:
-            monthly_growth_rate = 0
-            monthly_growth_delta = "N/A"
+            projected_revenue_last_value = 0
+            total_forecasted_revenue = 0
+
+        # Calculate total historical revenue
+        total_historical_revenue = df['y'].sum()
+
+        # Resample to monthly data to calculate MoM and YoY growth
+        df_monthly = df.set_index('ds').resample('M').sum()
         
-        # Lay out the new value cards in three columns
-        col_current_rev, col_projected_rev, col_growth = st.columns(3)
-        with col_current_rev:
-            st.metric(label="**Current Revenue**", value=f"${current_revenue:,.2f}")
-        with col_projected_rev:
-            st.metric(label=f"**Projected Revenue ({forecast_months} mo)**", value=f"${projected_revenue:,.2f}")
-        with col_growth:
-            st.metric(label="**Recent Monthly Growth**", value=f"{monthly_growth_rate:,.2f}%", delta=monthly_growth_delta)
+        mom_growth = 0
+        yoy_growth = 0
+
+        if len(df_monthly) >= 2:
+            mom_growth = ((df_monthly['y'].iloc[-1] - df_monthly['y'].iloc[-2]) / df_monthly['y'].iloc[-2]) * 100
+        
+        if len(df_monthly) >= 12:
+            last_month_year = df_monthly.index[-1].year
+            last_month_month = df_monthly.index[-1].month
+            
+            # Find the value from the previous year for the same month
+            last_year_value = df_monthly[(df_monthly.index.year == last_month_year - 1) & (df_monthly.index.month == last_month_month)]
+            
+            if not last_year_value.empty:
+                yoy_growth = ((df_monthly['y'].iloc[-1] - last_year_value['y'].iloc[0]) / last_year_value['y'].iloc[0]) * 100
+
+        # Lay out the new value cards in four columns
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(label="**Total Historical Revenue**", value=f"${total_historical_revenue:,.2f}")
+        with col2:
+            st.metric(label=f"**Total Forecasted Revenue ({forecast_months} mo)**", value=f"${total_forecasted_revenue:,.2f}")
+        with col3:
+            st.metric(label="**MoM Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+        with col4:
+            st.metric(label="**YoY Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
             
         # --- Forecast Chart ---
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
