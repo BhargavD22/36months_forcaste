@@ -187,6 +187,32 @@ else:
         # --- Apply what-if scenario to the forecast ---
         forecast['yhat_what_if'] = forecast['yhat'] * (1 + what_if_change / 100)
         
+        # --- Create new value cards for KPIs ---
+        current_revenue = df['y'].iloc[-1]
+        
+        # Calculate projected revenue as the sum of all future yhat values
+        projected_revenue = forecast.tail(forecast_period_days)['yhat_what_if'].sum()
+
+        # Calculate monthly growth rate from the last two data points
+        # Use .iloc[-1] for the last value, .iloc[-2] for the second to last
+        if len(df) >= 2:
+            last_revenue = df['y'].iloc[-1]
+            prev_revenue = df['y'].iloc[-2]
+            monthly_growth_rate = ((last_revenue - prev_revenue) / prev_revenue) * 100
+            monthly_growth_delta = f"{monthly_growth_rate:.2f}%"
+        else:
+            monthly_growth_rate = 0
+            monthly_growth_delta = "N/A"
+        
+        # Lay out the new value cards in three columns
+        col_current_rev, col_projected_rev, col_growth = st.columns(3)
+        with col_current_rev:
+            st.metric(label="**Current Revenue**", value=f"${current_revenue:,.2f}")
+        with col_projected_rev:
+            st.metric(label=f"**Projected Revenue ({forecast_months} mo)**", value=f"${projected_revenue:,.2f}")
+        with col_growth:
+            st.metric(label="**Recent Monthly Growth**", value=f"{monthly_growth_rate:,.2f}%", delta=monthly_growth_delta)
+            
         # --- Forecast Chart ---
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
 
