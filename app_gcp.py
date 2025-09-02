@@ -71,10 +71,7 @@ st.markdown(
 
         /* Style for the logo container */
         .logo-container {{
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
+            text-align: right;
         }}
         .logo-container img {{
             height: 60px;
@@ -132,15 +129,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Add Logo HTML ---
-st.markdown(
-    f'<div class="logo-container"><img src="data:image/png;base64,{encoded_string}" alt="Miracle Software Systems Logo"></div>',
-    unsafe_allow_html=True
-)
-
 # --- Main App Title and Description ---
-st.title("📈 Financial Forecasting Dashboard")
-st.markdown("A **dynamic** application to analyze historical revenue data from **Google BigQuery** and forecast future trends using the **Prophet** model.")
+# Use columns to place the title and logo side-by-side
+title_col, logo_col = st.columns([3, 1])
+
+with title_col:
+    st.title("📈 Financial Forecasting Dashboard")
+    st.markdown("A **dynamic** application to analyze historical revenue data from **Google BigQuery** and forecast future trends using the **Prophet** model.")
+
+with logo_col:
+    st.markdown(
+        f'<div class="logo-container"><img src="data:image/png;base64,{encoded_string}" alt="Miracle Software Systems Logo"></div>',
+        unsafe_allow_html=True
+    )
 
 # --- Interactive Sidebar for Controls ---
 with st.sidebar:
@@ -161,6 +162,8 @@ tab1, tab2 = st.tabs(["📊 Forecast", "📈 Model Performance"])
 with tab1:
     # --- Historical Data Plot ---
     st.subheader("Historical Revenue Data")
+    # Ensure df['ds'] is a datetime object before plotting.
+    df['ds'] = pd.to_datetime(df['ds'])
     st.line_chart(df.set_index('ds')['y'])
 
     # Fit Prophet model
@@ -170,6 +173,9 @@ with tab1:
     # Make forecast
     future = model.make_future_dataframe(periods=forecast_period_days)
     forecast = model.predict(future)
+    
+    # --- FIX: Convert 'ds' column to datetime to avoid TypeError ---
+    forecast['ds'] = pd.to_datetime(forecast['ds'])
     
     # --- Forecast Chart ---
     st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
