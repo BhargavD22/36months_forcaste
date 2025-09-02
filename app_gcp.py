@@ -171,7 +171,31 @@ else:
         st.subheader("Historical Revenue Data")
         # Ensure df['ds'] is a datetime object before plotting.
         df['ds'] = pd.to_datetime(df['ds'])
-        st.line_chart(df.set_index('ds')['y'])
+
+        # Calculate 30-day moving average
+        df['30_day_avg'] = df['y'].rolling(window=30).mean()
+
+        fig_historical = go.Figure()
+        fig_historical.add_trace(go.Scatter(
+            x=df['ds'], y=df['y'],
+            mode='lines',
+            name='Daily Revenue',
+            line=dict(color='blue', width=2)
+        ))
+        fig_historical.add_trace(go.Scatter(
+            x=df['ds'], y=df['30_day_avg'],
+            mode='lines',
+            name='30-Day Moving Average',
+            line=dict(color='green', width=3)
+        ))
+        fig_historical.update_layout(
+            title="Daily Revenue with 30-Day Moving Average",
+            xaxis_title="Date",
+            yaxis_title="Revenue",
+            template="plotly_white",
+            hovermode="x unified"
+        )
+        st.plotly_chart(fig_historical, use_container_width=True)
 
         # Fit Prophet model with user-defined seasonality
         model = Prophet(weekly_seasonality=weekly_seasonality, yearly_seasonality=yearly_seasonality)
@@ -187,50 +211,86 @@ else:
         # --- Apply what-if scenario to the forecast ---
         forecast['yhat_what_if'] = forecast['yhat'] * (1 + what_if_change / 100)
         
-        # --- Create new value cards for KPIs ---
-        current_revenue = df['y'].iloc[-1]
-        
-        # Calculate projected revenue as the last day's forecasted value
-        future_forecast = forecast[forecast['ds'] > df['ds'].max()]
-        if not future_forecast.empty:
-            projected_revenue_last_value = future_forecast['yhat_what_if'].iloc[-1]
-            total_forecasted_revenue = future_forecast['yhat_what_if'].sum()
-        else:
-            projected_revenue_last_value = 0
-            total_forecasted_revenue = 0
-
-        # Calculate total historical revenue
+        # --- Calculate new KPIs ---
         total_historical_revenue = df['y'].sum()
-
-        # Resample to monthly data to calculate MoM and YoY growth
-        df_monthly = df.set_index('ds').resample('M').sum()
+        total_forecasted_revenue = forecast[forecast['ds'] > df['ds'].max()]['yhat_what_if'].sum()
         
+        avg_historical_revenue = df['y'].mean()
+        avg_forecasted_revenue = total_forecasted_revenue / forecast_period_days
+        
+        highest_revenue_day_date = df.loc[df['y'].idxmax()]['ds'].strftime('%Y-%m-%d')
+        highest_revenue_day_value = df['y'].max()
+        
+        lowest_revenue_day_date = df.loc[df['y'].idxmin()]['ds'].strftime('%Y-%m-%d')
+        lowest_revenue_day_value = df['y'].min()
+
+        # Calculate MoM and YoY growth
+        df_monthly = df.set_index('ds').resample('M').sum()
         mom_growth = 0
         yoy_growth = 0
-
         if len(df_monthly) >= 2:
             mom_growth = ((df_monthly['y'].iloc[-1] - df_monthly['y'].iloc[-2]) / df_monthly['y'].iloc[-2]) * 100
-        
         if len(df_monthly) >= 12:
             last_month_year = df_monthly.index[-1].year
             last_month_month = df_monthly.index[-1].month
-            
-            # Find the value from the previous year for the same month
             last_year_value = df_monthly[(df_monthly.index.year == last_month_year - 1) & (df_monthly.index.month == last_month_month)]
-            
             if not last_year_value.empty:
                 yoy_growth = ((df_monthly['y'].iloc[-1] - last_year_value['y'].iloc[0]) / last_year_value['y'].iloc[0]) * 100
 
-        # Lay out the new value cards in four columns
-        col1, col2, col3, col4 = st.columns(4)
+        # Calculate CAGR
+        if len(df) > 1:
+            years = (df['ds'].iloc[-1] - df['ds'].iloc[0]).days / 365.25
+            if years > 0:
+                cagr = ((df['y'].iloc[-1] / df['y'].iloc[0]) ** (1/years) - 1) * 100
+            else:
+                cagr = 0
+        else:
+            cagr = 0
+
+        # --- Display KPIs in a multi-column layout ---
+        st.subheader("Core Revenue KPIs")
+        col1, col2 = st.columns(2)
         with col1:
             st.metric(label="**Total Historical Revenue**", value=f"${total_historical_revenue:,.2f}")
         with col2:
             st.metric(label=f"**Total Forecasted Revenue ({forecast_months} mo)**", value=f"${total_forecasted_revenue:,.2f}")
+
+        col3, col4, col5 = st.columns(3)
         with col3:
-            st.metric(label="**MoM Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+            st.metric(label="**Average Revenue (Historical)**", value=f"${avg_historical_revenue:,.2f}")
         with col4:
-            st.metric(label="**YoY Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
+            st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
+        with col5:
+            st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
+        
+        st.markdown("---")
+        st.subheader("Growth & Trend KPIs")
+        col6, col7, col8 = st.columns(3)
+        with col6:
+            st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+        with col7:
+            st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
+        with col8:
+            st.metric(label="**Historical CAGR**", value=f"{cagr:,.2f}%")
+
+        # --- Cumulative Revenue Chart ---
+        st.subheader("📈 Cumulative Revenue Trend")
+        df['cumulative_revenue'] = df['y'].cumsum()
+        fig_cumulative = go.Figure()
+        fig_cumulative.add_trace(go.Scatter(
+            x=df['ds'], y=df['cumulative_revenue'],
+            mode='lines',
+            name='Cumulative Revenue',
+            line=dict(color='purple', width=3)
+        ))
+        fig_cumulative.update_layout(
+            title="Cumulative Revenue Over Time",
+            xaxis_title="Date",
+            yaxis_title="Revenue ($)",
+            template="plotly_white",
+            hovermode="x unified"
+        )
+        st.plotly_chart(fig_cumulative, use_container_width=True)
             
         # --- Forecast Chart ---
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
