@@ -9,19 +9,15 @@ from prophet.plot import plot_components_plotly
 import base64
 
 # --- CONFIGURATION ---
-LOGO_DARK_PATH = "miracle-logo-dark.png"
-LOGO_LIGHT_PATH = "miracle-logo-light.png"
+LOGO_PATH = "miracle-logo-light.png" # Changed to the light logo
 
-# Set Streamlit page config for wide layout
+# Set Streamlit page config for wide layout and light theme
 st.set_page_config(
     layout="wide",
     page_title="Financial Forecasting",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    theme="light" # Hardcode to light theme
 )
-
-# Initialize session state for theme if it doesn't exist
-if 'theme_mode' not in st.session_state:
-    st.session_state['theme_mode'] = 'dark' # Default theme
 
 # === Function to connect and fetch data from BigQuery === #
 @st.cache_data
@@ -46,30 +42,8 @@ def get_bigquery_data():
 # === Streamlit App UI === #
 
 # --- Custom CSS for Styling ---
-# Define color schemes for dark and light themes
-themes = {
-    'dark': {
-        'background-color': '#1a1a2e',
-        'text-color': '#d1d1d1',
-        'container-bg': '#2e2e4e',
-        'accent-color': '#ff9900',
-        'chart-template': 'plotly_dark'
-    },
-    'light': {
-        'background-color': '#f0f2f6',
-        'text-color': '#333333',
-        'container-bg': '#ffffff',
-        'accent-color': '#007bff',
-        'chart-template': 'plotly_white'
-    }
-}
-
-# Select theme based on session state
-current_theme = themes[st.session_state['theme_mode']]
-
 # Read the logo image and encode it to Base64
-logo_path = LOGO_LIGHT_PATH if st.session_state['theme_mode'] == 'light' else LOGO_DARK_PATH
-with open(logo_path, "rb") as image_file:
+with open(LOGO_PATH, "rb") as image_file:
     encoded_string = base64.b64encode(image_file.read()).decode()
 
 st.markdown(
@@ -81,57 +55,47 @@ st.markdown(
             font-family: 'Inter', sans-serif;
         }}
         
-        /* Apply custom theme and background */
+        /* Apply custom theme and background for light mode */
         .stApp {{
-            background-color: {current_theme['background-color']};
-            color: {current_theme['text-color']};
+            background-color: #f0f2f6;
+            color: #333333;
         }}
 
         /* Style for the main container */
         .st-emotion-cache-1r4qj8m {{
-            background-color: {current_theme['container-bg']};
+            background-color: #ffffff;
             padding: 2rem;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
-        }}
-
-        /* Style for the logo container */
-        .logo-container {{
-            text-align: right;
-        }}
-        .logo-container img {{
-            height: 60px;
-            width: auto;
-            border-radius: 8px;
         }}
 
         /* Style for headers */
         h1, h2, h3, h4, h5, h6 {{
-            color: {current_theme['accent-color']}; /* A contrasting color */
+            color: #007bff; /* A contrasting color for light mode */
         }}
 
         /* Style for metrics */
         [data-testid="stMetricValue"] {{
             font-size: 2rem;
             font-weight: 700;
-            color: {current_theme['accent-color']};
+            color: #007bff;
         }}
 
         /* Style for the slider */
         .stSlider .st-emotion-cache-6q9m8y e16fv1ov3 {{
-            background-color: {current_theme['accent-color']};
+            background-color: #007bff;
         }}
         
         /* Style the tabs */
         .stTabs [role="tablist"] button {{
-            background-color: {current_theme['container-bg']};
-            color: {current_theme['text-color']};
+            background-color: #ffffff;
+            color: #333333;
             border-bottom: 3px solid transparent;
         }}
         .stTabs [role="tablist"] button[aria-selected="true"] {{
-            color: {current_theme['accent-color']};
-            border-bottom: 3px solid {current_theme['accent-color']};
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
         }}
         
         /* Style for the dataframe */
@@ -141,14 +105,14 @@ st.markdown(
         
         /* Style for the download button */
         .stDownloadButton button {{
-            background-color: {current_theme['accent-color']};
-            color: {current_theme['background-color']};
+            background-color: #007bff;
+            color: #ffffff;
             font-weight: bold;
             border-radius: 8px;
         }}
         .stDownloadButton button:hover {{
-            background-color: #e68a00;
-            color: #1a1a2e;
+            background-color: #0056b3;
+            color: #ffffff;
         }}
 
     </style>
@@ -157,30 +121,16 @@ st.markdown(
 )
 
 # --- Main App Title and Description ---
-# Use columns to place the title and logo side-by-side
-title_col, logo_col = st.columns([3, 1])
-
-with title_col:
-    st.title("📈 Financial Forecasting Dashboard")
-    st.markdown("A **dynamic** application to analyze historical revenue data from **Google BigQuery** and forecast future trends using the **Prophet** model.")
-
-with logo_col:
-    st.markdown(
-        f'<div class="logo-container"><img src="data:image/png;base64,{encoded_string}" alt="Miracle Software Systems Logo"></div>',
-        unsafe_allow_html=True
-    )
+st.title("📈 Financial Forecasting Dashboard")
+st.markdown("A **dynamic** application to analyze historical revenue data from **Google BigQuery** and forecast future trends using the **Prophet** model.")
 
 # --- Interactive Sidebar for Controls ---
 with st.sidebar:
+    # Add logo to the sidebar
+    st.image(LOGO_PATH, use_column_width=True)
     st.header("⚙️ Settings")
     
-    # Theme toggle
-    theme_toggle = st.toggle("Enable Light Mode", value=(st.session_state['theme_mode'] == 'light'))
-    if theme_toggle:
-        st.session_state['theme_mode'] = 'light'
-    else:
-        st.session_state['theme_mode'] = 'dark'
-
+    # Theme toggle is removed
     forecast_months = st.slider("Select number of months to forecast:", min_value=1, max_value=60, value=36)
     forecast_period_days = forecast_months * 30  # Prophet uses days
 
@@ -209,7 +159,7 @@ with tab1:
     future = model.make_future_dataframe(periods=forecast_period_days)
     forecast = model.predict(future)
     
-    # --- FIX: Convert 'ds' column to datetime to avoid TypeError ---
+    # --- Convert 'ds' column to datetime to avoid TypeError ---
     forecast['ds'] = pd.to_datetime(forecast['ds'])
     
     # --- Forecast Chart ---
@@ -253,7 +203,7 @@ with tab1:
         title=f"Forecasted Revenue for Next {forecast_months} Months",
         xaxis_title="Date",
         yaxis_title="Revenue",
-        template=current_theme['chart-template'], # Use the selected theme for Plotly
+        template="plotly_white", # Use the white theme for Plotly
         hovermode="x unified"
     )
 
@@ -290,15 +240,11 @@ with tab2:
 
     with col1:
         # Calculate Mean Absolute Error (MAE) and percentage
-        mae = np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat']))
-        mae_percent = (mae / average_y) * 100
-        st.metric("Mean Absolute Error (MAE)", f"${mae:,.2f}", f"{mae_percent:,.2f}% of Average Revenue")
+        st.metric("**Mean Absolute Error (MAE)**", f"${np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat'])):,.2f}", f"{(np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat'])) / average_y) * 100:,.2f}% of Average Revenue")
 
     with col2:
         # Calculate Root Mean Squared Error (RMSE) and percentage
-        rmse = np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2))
-        rmse_percent = (rmse / average_y) * 100
-        st.metric("Root Mean Squared Error (RMSE)", f"${rmse:,.2f}", f"{rmse_percent:,.2f}% of Average Revenue")
+        st.metric("**Root Mean Squared Error (RMSE)**", f"${np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2)):,.2f}", f"{(np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2)) / average_y) * 100:,.2f}% of Average Revenue")
     
     st.markdown("""
     **What are these metrics?**
