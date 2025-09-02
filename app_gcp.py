@@ -16,7 +16,8 @@ st.set_page_config(
     layout="wide",
     page_title="Financial Forecasting",
     initial_sidebar_state="expanded",
-    theme="light" # Hardcode to light theme
+    # The 'theme' argument has been removed to fix the TypeError.
+    # The custom CSS below handles the app's visual theme.
 )
 
 # === Function to connect and fetch data from BigQuery === #
