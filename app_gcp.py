@@ -57,6 +57,11 @@ with open(LOGO_PATH, "rb") as image_file:
 st.markdown(
     f"""
     <style>
+        /* Enable smooth scrolling for bookmarks */
+        html {{
+            scroll-behavior: smooth;
+        }}
+        
         /* Import Google Font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         html, body, .stApp {{
@@ -173,6 +178,23 @@ with st.sidebar:
 
     st.subheader("What-if Scenario Analysis")
     what_if_change = st.number_input("Future Revenue Change (%)", min_value=-100.0, max_value=100.0, value=0.0, step=0.5, help="Enter a percentage change to simulate a what-if scenario. Ex: 10 for a 10% increase.")
+
+    st.markdown("---")
+    
+    # --- Bookmarks Section ---
+    st.header("🔖 Bookmarks")
+    st.markdown(
+        """
+        [Core KPIs](#core-kpis)
+        [Cumulative Revenue](#cumulative-revenue)
+        [Historical Data](#historical-data)
+        [Forecast Chart](#forecast-chart)
+        [Forecast Table](#forecast-table)
+        [Model Performance](#model-performance)
+        [Time Series Components](#time-series-components)
+        """,
+        unsafe_allow_html=True
+    )
     
 # --- Main Content Area ---
 st.header("Data & Analysis")
@@ -246,6 +268,7 @@ else:
             cagr = 0
 
         # --- Display Core Revenue KPIs ---
+        st.markdown('<div id="core-kpis"></div>', unsafe_allow_html=True)
         st.subheader("Core Revenue KPIs")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -292,6 +315,7 @@ else:
         st.markdown("---")
 
         # --- Cumulative Revenue Chart ---
+        st.markdown('<div id="cumulative-revenue"></div>', unsafe_allow_html=True)
         st.subheader("📈 Cumulative Revenue Trend")
         df['cumulative_revenue'] = df['y'].cumsum()
         fig_cumulative = go.Figure()
@@ -311,6 +335,7 @@ else:
         st.plotly_chart(fig_cumulative, use_container_width=True)
 
         # --- Historical Revenue Data with related KPIs ---
+        st.markdown('<div id="historical-data"></div>', unsafe_allow_html=True)
         st.subheader("Historical Revenue Data")
         
         # Display Historical Performance Highlights
@@ -364,6 +389,7 @@ else:
         st.plotly_chart(fig_historical, use_container_width=True)
             
         # --- Forecast Chart ---
+        st.markdown('<div id="forecast-chart"></div>', unsafe_allow_html=True)
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
 
         # Separate historical and forecast parts
@@ -437,6 +463,7 @@ else:
         st.plotly_chart(fig, use_container_width=True)
 
         # --- Forecast Table and Download ---
+        st.markdown('<div id="forecast-table"></div>', unsafe_allow_html=True)
         st.subheader(f"🧾 {forecast_months}-Month Forecast Table")
         st.dataframe(
             forecast[['ds', 'yhat_what_if', 'yhat_lower', 'yhat_upper']].tail(forecast_period_days).rename(
@@ -454,6 +481,7 @@ else:
 
 
     with tab2:
+        st.markdown('<div id="model-performance"></div>', unsafe_allow_html=True)
         st.subheader("📊 Model Performance")
         
         # Prepare data for comparison
@@ -518,7 +546,8 @@ else:
         * **WAPE (Weighted Absolute Percentage Error)**: Provides a single percentage for overall accuracy, making it easy to interpret.
         * **Forecast Bias**: A positive value means the model is consistently over-forecasting, while a negative value indicates under-forecasting.
         """)
-
+        
+        st.markdown('<div id="time-series-components"></div>', unsafe_allow_html=True)
         st.subheader("📉 Time Series Components")
         st.markdown("Prophet breaks down your data into trend, weekly seasonality, and yearly seasonality.")
         components_fig = plot_components_plotly(model, forecast)
