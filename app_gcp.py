@@ -163,15 +163,20 @@ with tab2:
     # Get the average of historical data to calculate percentage error
     average_y = df['y'].mean()
 
-    # Calculate Mean Absolute Error (MAE) and percentage
-    mae = np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat']))
-    mae_percent = (mae / average_y) * 100
-    st.metric("Mean Absolute Error (MAE)", f"${mae:,.2f}", f"{mae_percent:,.2f}% of Average Revenue")
-    
-    # Calculate Root Mean Squared Error (RMSE) and percentage
-    rmse = np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2))
-    rmse_percent = (rmse / average_y) * 100
-    st.metric("Root Mean Squared Error (RMSE)", f"${rmse:,.2f}", f"{rmse_percent:,.2f}% of Average Revenue")
+    # Create two columns for side-by-side metrics
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Calculate Mean Absolute Error (MAE) and percentage
+        mae = np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat']))
+        mae_percent = (mae / average_y) * 100
+        st.metric("Mean Absolute Error (MAE)", f"${mae:,.2f}", f"{mae_percent:,.2f}% of Average Revenue")
+
+    with col2:
+        # Calculate Root Mean Squared Error (RMSE) and percentage
+        rmse = np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2))
+        rmse_percent = (rmse / average_y) * 100
+        st.metric("Root Mean Squared Error (RMSE)", f"${rmse:,.2f}", f"{rmse_percent:,.2f}% of Average Revenue")
     
     st.markdown("""
     **What are these metrics?**
