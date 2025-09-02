@@ -9,14 +9,19 @@ from prophet.plot import plot_components_plotly
 import base64
 
 # --- CONFIGURATION ---
-LOGO_PATH = "miracle-logo-dark.png"
+LOGO_DARK_PATH = "miracle-logo-dark.png"
+LOGO_LIGHT_PATH = "miracle-logo-light.png"
 
-# Set Streamlit page config for wide layout and dark theme
+# Set Streamlit page config for wide layout
 st.set_page_config(
     layout="wide",
     page_title="Financial Forecasting",
     initial_sidebar_state="expanded"
 )
+
+# Initialize session state for theme if it doesn't exist
+if 'theme_mode' not in st.session_state:
+    st.session_state['theme_mode'] = 'dark' # Default theme
 
 # === Function to connect and fetch data from BigQuery === #
 @st.cache_data
@@ -41,8 +46,30 @@ def get_bigquery_data():
 # === Streamlit App UI === #
 
 # --- Custom CSS for Styling ---
+# Define color schemes for dark and light themes
+themes = {
+    'dark': {
+        'background-color': '#1a1a2e',
+        'text-color': '#d1d1d1',
+        'container-bg': '#2e2e4e',
+        'accent-color': '#ff9900',
+        'chart-template': 'plotly_dark'
+    },
+    'light': {
+        'background-color': '#f0f2f6',
+        'text-color': '#333333',
+        'container-bg': '#ffffff',
+        'accent-color': '#007bff',
+        'chart-template': 'plotly_white'
+    }
+}
+
+# Select theme based on session state
+current_theme = themes[st.session_state['theme_mode']]
+
 # Read the logo image and encode it to Base64
-with open(LOGO_PATH, "rb") as image_file:
+logo_path = LOGO_LIGHT_PATH if st.session_state['theme_mode'] == 'light' else LOGO_DARK_PATH
+with open(logo_path, "rb") as image_file:
     encoded_string = base64.b64encode(image_file.read()).decode()
 
 st.markdown(
@@ -56,13 +83,13 @@ st.markdown(
         
         /* Apply custom theme and background */
         .stApp {{
-            background-color: #1a1a2e;
-            color: #d1d1d1;
+            background-color: {current_theme['background-color']};
+            color: {current_theme['text-color']};
         }}
 
         /* Style for the main container */
         .st-emotion-cache-1r4qj8m {{
-            background-color: #2e2e4e;
+            background-color: {current_theme['container-bg']};
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -81,30 +108,30 @@ st.markdown(
 
         /* Style for headers */
         h1, h2, h3, h4, h5, h6 {{
-            color: #ff9900; /* A contrasting color */
+            color: {current_theme['accent-color']}; /* A contrasting color */
         }}
 
         /* Style for metrics */
         [data-testid="stMetricValue"] {{
             font-size: 2rem;
             font-weight: 700;
-            color: #ff9900;
+            color: {current_theme['accent-color']};
         }}
 
         /* Style for the slider */
         .stSlider .st-emotion-cache-6q9m8y e16fv1ov3 {{
-            background-color: #ff9900;
+            background-color: {current_theme['accent-color']};
         }}
         
         /* Style the tabs */
         .stTabs [role="tablist"] button {{
-            background-color: #2e2e4e;
-            color: #d1d1d1;
+            background-color: {current_theme['container-bg']};
+            color: {current_theme['text-color']};
             border-bottom: 3px solid transparent;
         }}
         .stTabs [role="tablist"] button[aria-selected="true"] {{
-            color: #ff9900;
-            border-bottom: 3px solid #ff9900;
+            color: {current_theme['accent-color']};
+            border-bottom: 3px solid {current_theme['accent-color']};
         }}
         
         /* Style for the dataframe */
@@ -114,8 +141,8 @@ st.markdown(
         
         /* Style for the download button */
         .stDownloadButton button {{
-            background-color: #ff9900;
-            color: #1a1a2e;
+            background-color: {current_theme['accent-color']};
+            color: {current_theme['background-color']};
             font-weight: bold;
             border-radius: 8px;
         }}
@@ -146,6 +173,14 @@ with logo_col:
 # --- Interactive Sidebar for Controls ---
 with st.sidebar:
     st.header("⚙️ Settings")
+    
+    # Theme toggle
+    theme_toggle = st.toggle("Enable Light Mode", value=(st.session_state['theme_mode'] == 'light'))
+    if theme_toggle:
+        st.session_state['theme_mode'] = 'light'
+    else:
+        st.session_state['theme_mode'] = 'dark'
+
     forecast_months = st.slider("Select number of months to forecast:", min_value=1, max_value=60, value=36)
     forecast_period_days = forecast_months * 30  # Prophet uses days
 
@@ -218,7 +253,7 @@ with tab1:
         title=f"Forecasted Revenue for Next {forecast_months} Months",
         xaxis_title="Date",
         yaxis_title="Revenue",
-        template="plotly_dark", # Use a dark theme for Plotly
+        template=current_theme['chart-template'], # Use the selected theme for Plotly
         hovermode="x unified"
     )
 
