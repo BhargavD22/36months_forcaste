@@ -162,7 +162,11 @@ st.markdown("A **dynamic** application to analyze historical revenue data from *
 # --- Interactive Sidebar for Controls ---
 with st.sidebar:
     # Add logo to the sidebar
-    st.image(LOGO_PATH, use_column_width=True)
+    try:
+        st.image(LOGO_PATH, use_container_width=True)
+    except FileNotFoundError:
+        st.error(f"Logo file not found at {LOGO_PATH}")
+        
     st.header("⚙️ Settings")
     
     st.subheader("Forecast Period")
