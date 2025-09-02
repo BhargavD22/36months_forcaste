@@ -83,13 +83,6 @@ st.markdown(
             color: #007bff; /* A contrasting color for light mode */
         }}
 
-        /* Style for metrics */
-        [data-testid="stMetricValue"] {{
-            font-size: 2rem;
-            font-weight: 700;
-            color: #007bff;
-        }}
-
         /* Style for the slider */
         .stSlider .st-emotion-cache-6q9m8y e16fv1ov3 {{
             background-color: #007bff;
@@ -130,9 +123,27 @@ st.markdown(
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease-in-out;
+            text-align: center;
         }}
         .kpi-card:hover {{
             transform: translateY(-5px);
+        }}
+        .kpi-label {{
+            font-size: 1rem;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }}
+        .kpi-value {{
+            font-size: 2rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 0;
+        }}
+        .kpi-delta {{
+            font-size: 0.875rem;
+            color: #28a745;
+            margin-top: 0.5rem;
         }}
     </style>
     """,
@@ -238,25 +249,45 @@ else:
         st.subheader("Core Revenue KPIs")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Total Historical Revenue**", value=f"${total_historical_revenue:,.2f}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Total Historical Revenue</p>
+                    <p class="kpi-value">${total_historical_revenue:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col2:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label=f"**Total Forecasted Revenue ({forecast_months} mo)**", value=f"${total_forecasted_revenue:,.2f}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Total Forecasted Revenue ({forecast_months} mo)</p>
+                    <p class="kpi-value">${total_forecasted_revenue:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col3:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Average Daily Revenue**", value=f"${avg_historical_revenue:,.2f}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Average Daily Revenue</p>
+                    <p class="kpi-value">${avg_historical_revenue:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col4:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Historical CAGR**", value=f"{cagr:,.2f}%")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Historical CAGR</p>
+                    <p class="kpi-value">{cagr:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         st.markdown("---")
 
@@ -286,15 +317,27 @@ else:
         st.markdown("#### Performance Highlights")
         col_hist1, col_hist2 = st.columns(2)
         with col_hist1:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Highest Revenue Day</p>
+                    <p class="kpi-value">${highest_revenue_day_value:,.2f}</p>
+                    <p class="kpi-delta" style="color: #666;">Date: {highest_revenue_day_date}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col_hist2:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Lowest Revenue Day</p>
+                    <p class="kpi-value">${lowest_revenue_day_value:,.2f}</p>
+                    <p class="kpi-delta" style="color: #666;">Date: {lowest_revenue_day_date}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         
         st.markdown("---")
         
@@ -331,15 +374,25 @@ else:
         st.markdown("#### Growth & Trends")
         col_growth1, col_growth2 = st.columns(2)
         with col_growth1:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Month-over-Month Growth</p>
+                    <p class="kpi-value">{mom_growth:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col_growth2:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Year-over-Year Growth</p>
+                    <p class="kpi-value">{yoy_growth:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         
         st.markdown("---")
 
@@ -417,13 +470,45 @@ else:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("**Mean Absolute Error (MAE)**", f"${np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat'])):,.2f}")
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Mean Absolute Error (MAE)</p>
+                    <p class="kpi-value">${np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat'])):,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col2:
-            st.metric("**Root Mean Squared Error (RMSE)**", f"${np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2)):,.2f}")
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Root Mean Squared Error (RMSE)</p>
+                    <p class="kpi-value">${np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2)):,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col3:
-            st.metric("**WAPE**", f"{wape:,.2f}%")
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">WAPE</p>
+                    <p class="kpi-value">{wape:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         with col4:
-            st.metric("**Forecast Bias**", f"${forecast_bias:,.2f}")
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Forecast Bias</p>
+                    <p class="kpi-value">${forecast_bias:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         st.markdown("""
         **What are these metrics?**
