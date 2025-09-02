@@ -3,5 +3,4 @@ prophet
 plotly
 google-cloud-bigquery
 pandas
-
-
+db-dtypes
