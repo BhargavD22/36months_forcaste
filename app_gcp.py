@@ -6,6 +6,7 @@ from google.cloud import bigquery
 import plotly.graph_objects as go
 import numpy as np
 from prophet.plot import plot_components_plotly
+import base64
 
 # --- CONFIGURATION ---
 LOGO_PATH = "miracle-logo-dark.png"
@@ -32,7 +33,11 @@ def get_bigquery_data():
 
 # === Streamlit App UI === #
 
-# --- Custom CSS for Logo ---
+# --- Custom CSS for Logo (Fix) ---
+# Read the logo image and encode it to Base64
+with open(LOGO_PATH, "rb") as image_file:
+    encoded_string = base64.b64encode(image_file.read()).decode()
+
 st.markdown(
     f"""
     <style>
@@ -51,9 +56,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Add Logo HTML ---
+# --- Add Logo HTML (Fix) ---
 st.markdown(
-    f'<div class="logo-container"><img src="{LOGO_PATH}" alt="Miracle Software Systems Logo"></div>',
+    f'<div class="logo-container"><img src="data:image/png;base64,{encoded_string}" alt="Miracle Software Systems Logo"></div>',
     unsafe_allow_html=True
 )
 
@@ -152,14 +157,28 @@ with tab1:
 
 with tab2:
     st.subheader("📊 Forecast Accuracy")
-    # Calculate Mean Absolute Error (MAE)
+    # Prepare data for comparison
     historical_comparison = pd.merge(df, forecast, on='ds', how='inner')
+    
+    # Get the average of historical data to calculate percentage error
+    average_y = df['y'].mean()
+
+    # Calculate Mean Absolute Error (MAE) and percentage
     mae = np.mean(np.abs(historical_comparison['y'] - historical_comparison['yhat']))
-    st.metric("Mean Absolute Error (MAE)", f"${mae:,.2f}")
+    mae_percent = (mae / average_y) * 100
+    st.metric("Mean Absolute Error (MAE)", f"${mae:,.2f}", f"{mae_percent:,.2f}% of Average Revenue")
+    
+    # Calculate Root Mean Squared Error (RMSE) and percentage
+    rmse = np.sqrt(np.mean((historical_comparison['y'] - historical_comparison['yhat'])**2))
+    rmse_percent = (rmse / average_y) * 100
+    st.metric("Root Mean Squared Error (RMSE)", f"${rmse:,.2f}", f"{rmse_percent:,.2f}% of Average Revenue")
     
     st.markdown("""
-    **What is MAE?**
-    It's the average absolute difference between the actual historical values and the model's predictions. A lower number indicates a more accurate model.
+    **What are these metrics?**
+
+    * **Mean Absolute Error (MAE)**: This represents the average dollar amount your forecast was off by for each data point. The percentage value shows this error relative to your average historical revenue.
+
+    * **Root Mean Squared Error (RMSE)**: This metric also measures the average error in dollars, but it penalizes larger errors more heavily. It's useful for understanding if your model had a few very large forecasting misses. The percentage value shows this error relative to your average historical revenue.
     """)
 
     st.subheader("📉 Time Series Components")
