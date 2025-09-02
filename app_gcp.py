@@ -234,8 +234,8 @@ else:
         else:
             cagr = 0
 
-        # --- Display KPIs in a card-based multi-column layout ---
-        st.subheader("Key Financial Metrics")
+        # --- Display Core Revenue KPIs ---
+        st.subheader("Core Revenue KPIs")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             with st.container():
@@ -257,25 +257,7 @@ else:
                 st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
                 st.metric(label="**Historical CAGR**", value=f"{cagr:,.2f}%")
                 st.markdown('</div>', unsafe_allow_html=True)
-        
-        col5, col6, col7 = st.columns(3)
-        with col5:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
-                st.markdown('</div>', unsafe_allow_html=True)
-        with col6:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
-                st.markdown('</div>', unsafe_allow_html=True)
-        with col7:
-            with st.container():
-                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-                st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
-                st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
-                st.markdown('</div>', unsafe_allow_html=True)
-                
+
         st.markdown("---")
 
         # --- Cumulative Revenue Chart ---
@@ -297,8 +279,24 @@ else:
         )
         st.plotly_chart(fig_cumulative, use_container_width=True)
 
-        # --- Historical Data Plot ---
+        # --- Historical Revenue Data with related KPIs ---
         st.subheader("Historical Revenue Data")
+        
+        # Display Historical Performance Highlights
+        st.markdown("#### Performance Highlights")
+        col_hist1, col_hist2 = st.columns(2)
+        with col_hist1:
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Highest Revenue Day**", value=f"${highest_revenue_day_value:,.2f}", delta=f"Date: {highest_revenue_day_date}")
+                st.markdown('</div>', unsafe_allow_html=True)
+        with col_hist2:
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Lowest Revenue Day**", value=f"${lowest_revenue_day_value:,.2f}", delta=f"Date: {lowest_revenue_day_date}")
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown("---")
         
         fig_historical = go.Figure()
         fig_historical.add_trace(go.Scatter(
@@ -328,6 +326,22 @@ else:
         # Separate historical and forecast parts
         historical = forecast[forecast['ds'] <= df['ds'].max()]
         future_forecast = forecast[forecast['ds'] > df['ds'].max()]
+
+        # Display Growth KPIs
+        st.markdown("#### Growth & Trends")
+        col_growth1, col_growth2 = st.columns(2)
+        with col_growth1:
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Month-over-Month Growth**", value=f"{mom_growth:,.2f}%", delta="N/A" if mom_growth == 0 else (f"{mom_growth:,.2f}%"))
+                st.markdown('</div>', unsafe_allow_html=True)
+        with col_growth2:
+            with st.container():
+                st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
+                st.metric(label="**Year-over-Year Growth**", value=f"{yoy_growth:,.2f}%", delta="N/A" if yoy_growth == 0 else (f"{yoy_growth:,.2f}%"))
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown("---")
 
         fig = go.Figure()
 
