@@ -9,7 +9,7 @@ from prophet.plot import plot_components_plotly
 import base64
 
 # --- CONFIGURATION ---
-LOGO_PATH = "miracle-logo-light.png"
+LOGO_PATH = "miracle-logo-dark.png"
 
 # Set Streamlit page config for wide layout and light theme
 st.set_page_config(
