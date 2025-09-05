@@ -194,7 +194,7 @@ with st.sidebar:
         """
         [Core KPIs](#core-kpis)
         [Cumulative Revenue](#cumulative-revenue)
-        [Historical Data](#historical-data)
+        [Daily Revenue](#daily-revenue)
         [Forecast Chart](#forecast-chart)
         [Forecast Table](#forecast-table)
         [Model Performance](#model-performance)
@@ -221,9 +221,6 @@ else:
         # Ensure df['ds'] is a datetime object before plotting.
         df['ds'] = pd.to_datetime(df['ds'])
 
-        # Calculate 30-day moving average
-        df['30_day_avg'] = df['y'].rolling(window=30).mean()
-
         # Fit Prophet model with user-defined seasonality
         model = Prophet(weekly_seasonality=weekly_seasonality, yearly_seasonality=yearly_seasonality)
         model.fit(df)
@@ -243,108 +240,88 @@ else:
         # Historical KPIs
         total_historical_revenue = df['y'].sum()
         avg_historical_revenue = df['y'].mean()
-        highest_revenue_day_value = df['y'].max()
-        highest_revenue_day_date = df.loc[df['y'].idxmax()]['ds'].strftime('%Y-%m-%d')
-        lowest_revenue_day_value = df['y'].min()
-        lowest_revenue_day_date = df.loc[df['y'].idxmin()]['ds'].strftime('%Y-%m-%d')
         
         # Forecasted KPIs
         forecast_df = forecast[forecast['ds'] > df['ds'].max()]
         total_forecasted_revenue = forecast_df['yhat_what_if'].sum()
         avg_forecasted_revenue = forecast_df['yhat_what_if'].mean()
-        highest_forecasted_day_value = forecast_df['yhat_what_if'].max()
-        highest_forecasted_day_date = forecast_df.loc[forecast_df['yhat_what_if'].idxmax()]['ds'].strftime('%Y-%m-%d')
-        
-        # Combined KPIs for overall view
-        combined_df = pd.concat([df, forecast_df.rename(columns={'yhat_what_if': 'y'})[['ds', 'y']]])
-        cagr = 0
-        if len(combined_df) > 1:
-            years = (combined_df['ds'].iloc[-1] - combined_df['ds'].iloc[0]).days / 365.25
-            if years > 0:
-                cagr = ((combined_df['y'].iloc[-1] / combined_df['y'].iloc[0]) ** (1/years) - 1) * 100
 
-        # --- Display Core Revenue KPIs ---
+        # --- Display Core Revenue KPIs with Side-by-Side Comparison ---
         st.markdown('<div id="core-kpis"></div>', unsafe_allow_html=True)
-        st.subheader("Core Revenue KPIs: Historical vs. Forecasted")
+        st.subheader("Core Revenue KPIs")
         
-        col_hist, col_forecast = st.columns(2)
-        
-        with col_hist:
-            st.markdown("### 📊 Historical")
+        # Row 1: Total Revenue
+        col1, col2 = st.columns(2)
+        with col1:
             st.markdown(
                 f"""
                 <div class="kpi-card">
-                    <p class="kpi-label">Total Revenue</p>
+                    <p class="kpi-label">Historical Total Revenue</p>
                     <p class="kpi-value">${total_historical_revenue:,.2f}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+        with col2:
             st.markdown(
                 f"""
                 <div class="kpi-card">
-                    <p class="kpi-label">Average Daily Revenue</p>
+                    <p class="kpi-label">Forecasted Total Revenue ({forecast_months} mo)</p>
+                    <p class="kpi-value">${total_forecasted_revenue:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Row 2: Average Daily Revenue
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Historical Average Daily Revenue</p>
                     <p class="kpi-value">${avg_historical_revenue:,.2f}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+        with col4:
             st.markdown(
                 f"""
                 <div class="kpi-card">
-                    <p class="kpi-label">Highest Day</p>
+                    <p class="kpi-label">Forecasted Average Daily Revenue</p>
+                    <p class="kpi-value">${avg_forecasted_revenue:,.2f}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Row 3: Highest Revenue Day (Historical vs. Forecasted)
+        highest_revenue_day_value = df['y'].max()
+        highest_revenue_day_date = df.loc[df['y'].idxmax()]['ds'].strftime('%Y-%m-%d')
+        
+        highest_forecasted_day_value = forecast_df['yhat_what_if'].max()
+        highest_forecasted_day_date = forecast_df.loc[forecast_df['yhat_what_if'].idxmax()]['ds'].strftime('%Y-%m-%d')
+
+        col5, col6 = st.columns(2)
+        with col5:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Highest Historical Day</p>
                     <p class="kpi-value">${highest_revenue_day_value:,.2f}</p>
                     <p class="kpi-delta" style="color: #666;">Date: {highest_revenue_day_date}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+        with col6:
             st.markdown(
                 f"""
                 <div class="kpi-card">
-                    <p class="kpi-label">Lowest Day</p>
-                    <p class="kpi-value">${lowest_revenue_day_value:,.2f}</p>
-                    <p class="kpi-delta" style="color: #666;">Date: {lowest_revenue_day_date}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col_forecast:
-            st.markdown("### 🔮 Forecasted")
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <p class="kpi-label">Total Projected Revenue ({forecast_months} mo)</p>
-                    <p class="kpi-value">${total_forecasted_revenue:,.2f}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <p class="kpi-label">Average Projected Revenue</p>
-                    <p class="kpi-value">${avg_forecasted_revenue:,.2f}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <p class="kpi-label">Highest Projected Day</p>
+                    <p class="kpi-label">Highest Forecasted Day</p>
                     <p class="kpi-value">${highest_forecasted_day_value:,.2f}</p>
                     <p class="kpi-delta" style="color: #666;">Date: {highest_forecasted_day_date}</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                f"""
-                <div class="kpi-card">
-                    <p class="kpi-label">Projected CAGR</p>
-                    <p class="kpi-value">{cagr:,.2f}%</p>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -355,14 +332,39 @@ else:
         # --- Cumulative Revenue Chart ---
         st.markdown('<div id="cumulative-revenue"></div>', unsafe_allow_html=True)
         st.subheader("📈 Cumulative Revenue Trend")
-        df['cumulative_revenue'] = df['y'].cumsum()
+
+        # Create a combined DataFrame for cumulative revenue
+        combined_df = pd.concat([
+            df[['ds', 'y']].assign(type='Historical'),
+            forecast.rename(columns={'yhat_what_if': 'y'})[['ds', 'y']].assign(type='Forecast')
+        ])
+        combined_df['cumulative_revenue'] = combined_df['y'].cumsum()
+        
+        # Create the plot
         fig_cumulative = go.Figure()
+
+        # Plot historical cumulative revenue in one color
         fig_cumulative.add_trace(go.Scatter(
-            x=df['ds'], y=df['cumulative_revenue'],
+            x=combined_df[combined_df['type'] == 'Historical']['ds'],
+            y=combined_df[combined_df['type'] == 'Historical']['cumulative_revenue'],
             mode='lines',
-            name='Cumulative Revenue',
-            line=dict(color='purple', width=3)
+            name='Historical Revenue',
+            line=dict(color='blue', width=3)
         ))
+
+        # Plot forecasted cumulative revenue in another color
+        fig_cumulative.add_trace(go.Scatter(
+            x=combined_df[combined_df['type'] == 'Forecast']['ds'],
+            y=combined_df[combined_df['type'] == 'Forecast']['cumulative_revenue'],
+            mode='lines',
+            name='Forecasted Revenue',
+            line=dict(color='orange', width=3, dash='dash')
+        ))
+
+        # Add a vertical dashed line to mark the transition
+        start_of_forecast = df['ds'].max()
+        fig_cumulative.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
+
         fig_cumulative.update_layout(
             title="Cumulative Revenue Over Time",
             xaxis_title="Date",
@@ -371,33 +373,63 @@ else:
             hovermode="x unified"
         )
         st.plotly_chart(fig_cumulative, use_container_width=True)
-
-        # --- Historical Revenue Data with related KPIs ---
-        st.markdown('<div id="historical-data"></div>', unsafe_allow_html=True)
-        st.subheader("Historical Revenue Data")
         
-        fig_historical = go.Figure()
-        fig_historical.add_trace(go.Scatter(
+        # --- Daily Revenue with Moving Averages ---
+        st.markdown('<div id="daily-revenue"></div>', unsafe_allow_html=True)
+        st.subheader("Daily Revenue Trend")
+
+        # Calculate 30-day moving average for historical data
+        df['30_day_avg'] = df['y'].rolling(window=30).mean()
+
+        # Calculate 30-day moving average for forecasted data
+        forecast['30_day_avg_forecast'] = forecast['yhat_what_if'].rolling(window=30).mean()
+
+        fig_daily = go.Figure()
+        
+        # Plot historical daily revenue
+        fig_daily.add_trace(go.Scatter(
             x=df['ds'], y=df['y'],
             mode='lines',
-            name='Daily Revenue',
+            name='Historical Daily Revenue',
             line=dict(color='blue', width=2)
         ))
-        fig_historical.add_trace(go.Scatter(
+        
+        # Plot historical 30-day moving average
+        fig_daily.add_trace(go.Scatter(
             x=df['ds'], y=df['30_day_avg'],
             mode='lines',
-            name='30-Day Moving Average',
+            name='Historical 30-Day Moving Avg',
             line=dict(color='green', width=3)
         ))
-        fig_historical.update_layout(
+        
+        # Plot forecasted daily revenue
+        fig_daily.add_trace(go.Scatter(
+            x=forecast['ds'][forecast['ds'] > df['ds'].max()], y=forecast['yhat_what_if'][forecast['ds'] > df['ds'].max()],
+            mode='lines',
+            name='Forecasted Daily Revenue',
+            line=dict(color='red', width=2, dash='dash')
+        ))
+        
+        # Plot forecasted 30-day moving average
+        fig_daily.add_trace(go.Scatter(
+            x=forecast['ds'][forecast['ds'] > df['ds'].max()], y=forecast['30_day_avg_forecast'][forecast['ds'] > df['ds'].max()],
+            mode='lines',
+            name='Forecasted 30-Day Moving Avg',
+            line=dict(color='purple', width=3, dash='dash')
+        ))
+
+        # Add a vertical dashed line to mark the transition
+        fig_daily.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
+        
+        fig_daily.update_layout(
             title="Daily Revenue with 30-Day Moving Average",
             xaxis_title="Date",
             yaxis_title="Revenue",
             template="plotly_white",
             hovermode="x unified"
         )
-        st.plotly_chart(fig_historical, use_container_width=True)
-              
+        st.plotly_chart(fig_daily, use_container_width=True)
+
         # --- Forecast Chart ---
         st.markdown('<div id="forecast-chart"></div>', unsafe_allow_html=True)
         st.subheader(f"🔮 Forecasted Revenue ({forecast_months} Months)")
@@ -435,6 +467,9 @@ else:
             showlegend=True,
             name=f"{confidence_interval*100:.0f}% Confidence Interval"
         ))
+        
+        # Add a vertical dashed line to mark the transition
+        fig.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
 
         fig.update_layout(
             title=f"Forecasted Revenue for Next {forecast_months} Months",
