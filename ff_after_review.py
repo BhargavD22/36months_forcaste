@@ -193,6 +193,7 @@ with st.sidebar:
     st.markdown(
         """
         [Core KPIs](#core-kpis)
+        [Growth Metrics](#growth-metrics)
         [Cumulative Revenue](#cumulative-revenue)
         [Daily Revenue](#daily-revenue)
         [Forecast Chart](#forecast-chart)
@@ -322,6 +323,82 @@ else:
                     <p class="kpi-label">Highest Forecasted Day</p>
                     <p class="kpi-value">${highest_forecasted_day_value:,.2f}</p>
                     <p class="kpi-delta" style="color: #666;">Date: {highest_forecasted_day_date}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.markdown("---")
+        
+        # --- Growth Metrics (MoM & YoY) ---
+        st.markdown('<div id="growth-metrics"></div>', unsafe_allow_html=True)
+        st.subheader("Growth Metrics: MoM & YoY")
+        
+        # Calculate monthly and yearly growth for historical data
+        df['month'] = df['ds'].dt.to_period('M')
+        monthly_revenue_hist = df.groupby('month')['y'].sum().reset_index()
+        monthly_revenue_hist['MoM_Growth'] = monthly_revenue_hist['y'].pct_change() * 100
+        
+        df['year'] = df['ds'].dt.to_period('Y')
+        yearly_revenue_hist = df.groupby('year')['y'].sum().reset_index()
+        yearly_revenue_hist['YoY_Growth'] = yearly_revenue_hist['y'].pct_change() * 100
+
+        # Calculate monthly and yearly growth for forecasted data
+        forecast_df['month'] = forecast_df['ds'].dt.to_period('M')
+        monthly_revenue_forecast = forecast_df.groupby('month')['yhat_what_if'].sum().reset_index()
+        monthly_revenue_forecast['MoM_Growth'] = monthly_revenue_forecast['yhat_what_if'].pct_change() * 100
+        
+        forecast_df['year'] = forecast_df['ds'].dt.to_period('Y')
+        yearly_revenue_forecast = forecast_df.groupby('year')['yhat_what_if'].sum().reset_index()
+        yearly_revenue_forecast['YoY_Growth'] = yearly_revenue_forecast['yhat_what_if'].pct_change() * 100
+        
+        # Get the latest available growth rates for display
+        latest_mom_hist = monthly_revenue_hist['MoM_Growth'].iloc[-1] if not monthly_revenue_hist['MoM_Growth'].empty else 0
+        latest_yoy_hist = yearly_revenue_hist['YoY_Growth'].iloc[-1] if not yearly_revenue_hist['YoY_Growth'].empty else 0
+        latest_mom_forecast = monthly_revenue_forecast['MoM_Growth'].iloc[-1] if not monthly_revenue_forecast['MoM_Growth'].empty else 0
+        latest_yoy_forecast = yearly_revenue_forecast['YoY_Growth'].iloc[-1] if not yearly_revenue_forecast['YoY_Growth'].empty else 0
+
+        # Row 1: Month-over-Month Growth
+        col7, col8 = st.columns(2)
+        with col7:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Latest Historical MoM Growth</p>
+                    <p class="kpi-value">{latest_mom_hist:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col8:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Latest Forecasted MoM Growth</p>
+                    <p class="kpi-value">{latest_mom_forecast:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Row 2: Year-over-Year Growth
+        col9, col10 = st.columns(2)
+        with col9:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Latest Historical YoY Growth</p>
+                    <p class="kpi-value">{latest_yoy_hist:,.2f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col10:
+            st.markdown(
+                f"""
+                <div class="kpi-card">
+                    <p class="kpi-label">Latest Forecasted YoY Growth</p>
+                    <p class="kpi-value">{latest_yoy_forecast:,.2f}%</p>
                 </div>
                 """,
                 unsafe_allow_html=True
