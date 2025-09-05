@@ -364,11 +364,22 @@ else:
         # Add a vertical dashed line to mark the transition
         start_of_forecast = df['ds'].max()
         fig_cumulative.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
+        
+        # Add annotation for the transition line
+        fig_cumulative.add_annotation(
+            x=start_of_forecast,
+            y=1,
+            text='Forecast begins here',
+            showarrow=True,
+            arrowhead=2,
+            ax=0,
+            ay=-40
+        )
 
         fig_cumulative.update_layout(
-            title="Cumulative Revenue Over Time",
+            title="Cumulative Revenue Over Time: Historical vs. Forecasted",
             xaxis_title="Date",
-            yaxis_title="Revenue ($)",
+            yaxis_title="Cumulative Revenue ($)",
             template="plotly_white",
             hovermode="x unified"
         )
@@ -421,8 +432,19 @@ else:
         # Add a vertical dashed line to mark the transition
         fig_daily.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
         
+        # Add annotation for the transition line
+        fig_daily.add_annotation(
+            x=start_of_forecast,
+            y=1,
+            text='Forecast begins here',
+            showarrow=True,
+            arrowhead=2,
+            ax=0,
+            ay=-40
+        )
+
         fig_daily.update_layout(
-            title="Daily Revenue with 30-Day Moving Average",
+            title="Daily Revenue with 30-Day Moving Averages",
             xaxis_title="Date",
             yaxis_title="Revenue",
             template="plotly_white",
@@ -470,6 +492,17 @@ else:
         
         # Add a vertical dashed line to mark the transition
         fig.add_vline(x=start_of_forecast, line_width=1, line_dash="dash", line_color="red")
+        
+        # Add annotation for the transition line
+        fig.add_annotation(
+            x=start_of_forecast,
+            y=1,
+            text='Forecast begins here',
+            showarrow=True,
+            arrowhead=2,
+            ax=0,
+            ay=-40
+        )
 
         fig.update_layout(
             title=f"Forecasted Revenue for Next {forecast_months} Months",
